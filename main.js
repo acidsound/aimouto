@@ -16,8 +16,76 @@ function init() {
   }
 }
 
+const animations = {
+  "Angry": { url: "Angry.fbx" },
+  "Neutral": { url: "Neutral Idle.fbx" },
+  "Joy": { url: "Happy.fbx" },
+  "Sorrow": { url: "Sad idle.fbx" },
+  "Fun": { url: "Laughing.fbx" },
+}
+const DEFAULT_ANIMATION = "Neutral";
+
 const synth = window.speechSynthesis;
 let voices;
+
+const params = {
+  timeScale: 1.0,
+  blinkLeft: 0,
+  blinkRight: 0,
+  aa: 0,
+  ee: 0,
+  ih: 0,
+  oh: 0,
+  ou: 0,
+};
+
+function populateVoices() {
+  voices = synth.getVoices().sort(function (a, b) {
+    const aname = a.name.toUpperCase();
+    const bname = b.name.toUpperCase();
+
+    if (aname < bname) {
+      return -1;
+    } else if (aname == bname) {
+      return 0;
+    } else {
+      return +1;
+    }
+  });
+}
+
+populateVoices();
+
+const utterances = [];
+
+const saySomething = (sentence = "안녕") => {
+  if (synth.speaking) return;
+
+  utteranceClock = new THREE.Clock();
+
+  const utterance = new SpeechSynthesisUtterance(sentence);
+  utterance.voice = synth.getVoices().findLast(o=>o.lang==='ko-KR');
+  utterance.pitch = 1.21;
+  utterances.push(utterance);
+
+  utterance.onend = function () {
+    console.log("SpeechSynthesisUtterance.onend");
+    currentVrm.expressionManager.setValue('oh', 0);
+    const animation = animations[DEFAULT_ANIMATION];
+    currentMixer = animation.mixer;
+    currentMixer.clipAction(animation.clip).play();
+
+    // res();
+  };
+  utterance.onerror = function () {
+    // rej("SpeechSynthesisUtterance.onerror");
+  };
+
+  utterance.addEventListener('boundary', function (event) {
+    console.log(event.name + ' boundary reached after ' + event.elapsedTime + ' milliseconds.');
+  });
+  synth.speak(utterance);
+};
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -68,13 +136,24 @@ const helperRoot = new THREE.Group();
 helperRoot.renderOrder = 10000;
 scene.add(helperRoot);
 
-const animations = {
-  "angry": { url: "Angry.fbx" },
-  "neutral": { url: "Neutral Idle.fbx" },
-  "joy": { url: "Happy.fbx" },
-  "sorrow": { url: "Sad idle.fbx" },
-  "fun": { url: "Laughing.fbx" },
+function parseString(input) {
+  const regex = /\[face:([\d.]+):(\w+)]\s*([^[\]]+)/g;
+  const output = [];
+  let match;
+
+  while ((match = regex.exec(input)) !== null) {
+    output.push({
+      message: match[3].trim(),
+      face: {
+        type: match[2],
+        strength: parseFloat(match[1]),
+      },
+    });
+  }
+
+  return output;
 }
+
 
 function loadVRM(modelUrl) {
 
@@ -103,11 +182,9 @@ function loadVRM(modelUrl) {
       VRMUtils.removeUnnecessaryJoints(gltf.scene);
 
       if (currentVrm) {
-
         scene.remove(currentVrm.scene);
 
         VRMUtils.deepDispose(currentVrm.scene);
-
       }
 
       currentVrm = vrm;
@@ -122,7 +199,7 @@ function loadVRM(modelUrl) {
       });
 
       await loadAnimations(animations);
-      const initialAnimation = animations["neutral"];
+      const initialAnimation = animations[DEFAULT_ANIMATION];
 
       currentMixer = initialAnimation.mixer;
       currentMixer.clipAction(initialAnimation.clip).play();
@@ -137,7 +214,7 @@ function loadVRM(modelUrl) {
 
       document.getElementById('send').addEventListener('click', async () => {
         const sentence = document.getElementById('sentence');
-        const response = await fetch('http://localhost:8080/', {
+        const response = await (await fetch('http://localhost:8080/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -145,9 +222,17 @@ function loadVRM(modelUrl) {
           body: JSON.stringify({
             sentence: sentence.value
           })
-        });
+        })).json();
         sentence.value = "";
-        //saySomething(response.text());
+        let sentences = [];
+        if (response?.content) {
+          sentences = parseString(response?.content);
+          const animation = animations[sentences[0].face.type];
+          currentMixer = animation.mixer;
+          currentMixer.clipAction(animation.clip).play();
+      
+          saySomething(sentences[0].message);
+        }
       });
     },
 
@@ -216,48 +301,8 @@ animate();
 // gui
 const gui = new GUI();
 
-function populateVoices() {
-  voices = synth.getVoices().sort(function (a, b) {
-    const aname = a.name.toUpperCase();
-    const bname = b.name.toUpperCase();
-
-    if (aname < bname) {
-      return -1;
-    } else if (aname == bname) {
-      return 0;
-    } else {
-      return +1;
-    }
-  });
-}
-
-populateVoices();
-
-let utterances = [];
-
-const saySomething = (sentence = "안녕") => {
-  if (synth.speaking) return;
-
-  utteranceClock = new THREE.Clock();
-  let utterance = new SpeechSynthesisUtterance(sentence);
-  utterance.voice = synth.getVoices()[12];
-  utterance.pitch = 1.21;
-  utterances.push(utterance);
-
-  utterance.onend = function (event) {
-    console.log("SpeechSynthesisUtterance.onend");
-    currentVrm.expressionManager.setValue('oh', 0);
-  };
-  utterance.onerror = function (event) {
-    console.error("SpeechSynthesisUtterance.onerror");
-  };
-
-  utterance.addEventListener('boundary', function (event) {
-    console.log(event.name + ' boundary reached after ' + event.elapsedTime + ' milliseconds.');
-  });
-  synth.speak(utterance);
-
-}
+params.saySomething = saySomething;
+params.listen = listen;
 
 const listen = function () {
   recognition.start();
@@ -267,9 +312,6 @@ recognition.onresult = async (event) => {
   const sentence = event.results[0][0].transcript;
   console.log(sentence);
   try {
-    const requestBody = {
-      key: 'value'
-    };
     const response = await fetch('http://localhost:8080/', {
       method: 'POST',
       headers: {
@@ -291,19 +333,6 @@ recognition.onresult = async (event) => {
   }
 };
 
-const params = {
-  timeScale: 1.0,
-  saySomething,
-  listen,
-  blinkLeft: 0,
-  blinkRight: 0,
-  aa: 0,
-  ee: 0,
-  ih: 0,
-  oh: 0,
-  ou: 0,
-};
-
 gui.add(params, 'saySomething');
 
 gui.add(params, 'listen');
@@ -319,7 +348,6 @@ gui.add(params, 'blinkLeft', 0.0, 1.0, 0.1).onChange((value) => {
 gui.add(params, 'blinkRight', 0.0, 1.0, 0.1).onChange((value) => {
   currentVrm.expressionManager.setValue('blinkRight', value);
 });
-
 
 gui.add(params, 'aa', 0.0, 1.0, 0.1).onChange((value) => {
   currentVrm.expressionManager.setValue('aa', value);
@@ -362,7 +390,7 @@ async function* animationsGenerator(animations) {
     yield animationName;
   }
   return;
-};
+}
 
 async function loadAnimations(animations) {
   for await (const key of animationsGenerator(animations)) {
