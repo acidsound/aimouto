@@ -134,6 +134,21 @@ function loadVRM(modelUrl) {
       console.log(vrm);
       // put the model to the scene
       scene.add(vrm.scene);
+
+      document.getElementById('send').addEventListener('click', async () => {
+        const sentence = document.getElementById('sentence');
+        const response = await fetch('http://localhost:8080/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sentence: sentence.value
+          })
+        });
+        sentence.value = "";
+        //saySomething(response.text());
+      });
     },
 
     // called while loading is progressing
