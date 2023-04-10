@@ -56,10 +56,12 @@ export default async function handler(req, res) {
     const answer = response.data?.choices[0]?.message;
     if (answer) {
       buffer.push(answer);
+      // TODO: functions 가 초기화 되지 않도록 buffer 를 외부에서 가져와야함.
+      console.log(`${buffer.length} 번째 대답`);
       console.log(answer);
     }
 
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify(answer));
   } catch (err) {
     console.error('Error:', err);

@@ -61,6 +61,7 @@ const utterances = [];
 const saySomething = (sentence = "안녕") => {
   if (synth.speaking) return;
 
+  console.log("aimouto says ", sentence);
   utteranceClock = new THREE.Clock();
 
   const utterance = new SpeechSynthesisUtterance(sentence);
@@ -227,11 +228,17 @@ function loadVRM(modelUrl) {
         let sentences = [];
         if (response?.content) {
           sentences = parseString(response?.content);
-          const animation = animations[sentences[0].face.type];
-          currentMixer = animation.mixer;
-          currentMixer.clipAction(animation.clip).play();
-      
-          saySomething(sentences[0].message);
+          if (sentences.length > 0) {
+            const animation = animations[sentences[0].face.type];
+            currentMixer = animation.mixer;
+            currentMixer.clipAction(animation.clip).play();
+        
+            saySomething(sentences[0].message);
+  
+          } else {
+            /* 감정을 못가져올 때 예외처리 */
+            saySomething(response.content);
+          }
         }
       });
     },
