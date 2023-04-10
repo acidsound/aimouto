@@ -18,9 +18,9 @@ function init() {
 
 const animations = {
   "Angry": { url: "Angry.fbx" },
-  "Neutral": { url: "Neutral Idle.fbx" },
+  "Neutral": { url: "Neutral_Idle.fbx" },
   "Joy": { url: "Happy.fbx" },
-  "Sorrow": { url: "Sad idle.fbx" },
+  "Sorrow": { url: "Sad_Idle.fbx" },
   "Fun": { url: "Laughing.fbx" },
 }
 const DEFAULT_ANIMATION = "Neutral";
@@ -214,7 +214,7 @@ function loadVRM(modelUrl) {
 
       document.getElementById('send').addEventListener('click', async () => {
         const sentence = document.getElementById('sentence');
-        const response = await (await fetch('http://localhost:8080/', {
+        const response = await (await fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -301,12 +301,12 @@ animate();
 // gui
 const gui = new GUI();
 
-params.saySomething = saySomething;
-params.listen = listen;
-
 const listen = function () {
   recognition.start();
 }
+
+params.saySomething = saySomething;
+params.listen = listen;
 
 recognition.onresult = async (event) => {
   const sentence = event.results[0][0].transcript;
