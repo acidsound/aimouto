@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "azure-openai": "^0.9.4"
+    "@google/generative-ai": "^0.1.2"
   }
 }
