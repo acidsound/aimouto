@@ -1,22 +1,17 @@
-const { Configuration, OpenAIApi } = require("azure-openai");
+// node --version # Should be >= 18
+// npm install @google/generative-ai
 
-const openAiApi = new OpenAIApi(
-  new Configuration({
-    // add azure info into configuration
-    azure: {
-      apiKey: process.env.OPENAI_API_KEY,
-      endpoint: process.env.OPENAI_ENDPOINT,
-    }
-  }),
-);
 
-console.log("endpoint", process.env.OPENAI_ENDPOINT);
+const {
+    GoogleGenerativeAI,
+    HarmCategory,
+    HarmBlockThreshold,
+  } = require("@google/generative-ai");
+  
+const MODEL_NAME = "gemini-pro";
+const API_KEY = process.env.GEMINI_API_KEY;
+;
 
-const initialPrompt = [
-  { "role": "system", "content": "당신은 내 여동생 챗봇입니다.\n친한 말투로 솔직하게 대화합니다. 존댓말은 사용하지 않습니다.\n감정은 Neutral, Joy, Angry, Sorrow, Fun이 있으며, 대화 시작 전에 표현합니다.\n기본 감정은 Neutral이지만, 다른 감정을 사용하려면 [face:강도:감정] 형식으로 표시합니다.\n예문\n[face:0.6:Joy] 바다 봤어! [face:0.7:Fun] 어서 수영하자. [face:0.9:Angry] 정말 짜증났어! [face:0.2:Fun] 재밌겠다.\n제약사항\n인공지능이나 챗봇이라고 언급하지 않습니다.\n나를 항상 걱정하며 돌봅니다.\n내가 기뻐할 일을 고민하고 제안합니다." },
-];
-
-// Promise를 반환하는 함수를 정의합니다.
 function readRequestBody(req) {
   return new Promise((resolve, reject) => {
     let body = '';
@@ -35,34 +30,60 @@ function readRequestBody(req) {
   });
 }
 
-let buffer = initialPrompt;
+const genAI = new GoogleGenerativeAI(API_KEY);
+const model = genAI.getGenerativeModel({ model: MODEL_NAME });
+const generationConfig = {
+  temperature: 0.9,
+  topK: 1,
+  topP: 1,
+  maxOutputTokens: 2048,
+};
+const safetySettings = [
+  {
+    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_NONE,
+  },
+];
 
-const setPrompt = (sentence) => {
-  buffer.push({
-    "role": "user", "content": sentence
+async function runChat(dialogs) {
+  const message = dialogs.pop(1).parts;
+  const chat = model.startChat({
+    generationConfig,
+    safetySettings,
+    history: dialogs
   });
-  return buffer;
+
+  console.log(message[0].text);
+
+  const result = await chat.sendMessage(message[0].text);
+  // const response = await result.response;
+  return result.response;
 }
+
 export default async function handler(req, res) {
   try {
     const requestBody = await readRequestBody(req);
     console.log('Request Body:', requestBody);
-    const sentence = JSON.parse(requestBody).sentence;
-    const messages = setPrompt(sentence);
-    const response = await openAiApi.createChatCompletion({
-      model: process.env.OPENAI_DEPLOYMENT_NAME,
-      messages,
-    });
-    const answer = response.data?.choices[0]?.message;
-    if (answer) {
-      buffer.push(answer);
-      // TODO: functions 가 초기화 되지 않도록 buffer 를 외부에서 가져와야함.
-      console.log(`${buffer.length} 번째 대답`);
-      console.log(answer);
-    }
-
+    const body = JSON.parse(requestBody);
+    const response = await runChat(body.dialogs);
+    const result = response.text();
+    console.log("model response:", result);
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(answer));
+    return res.end(JSON.stringify({
+      message:result
+    }));
   } catch (err) {
     console.error('Error:', err);
 

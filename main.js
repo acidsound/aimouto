@@ -58,7 +58,22 @@ populateVoices();
 
 const utterances = [];
 
+// let initialPrompt = "You are \nmy little younger sister chatbot.I speak to you in a friendly, straightforward \nmanner. We do not use honorifics.Your emotions are Neutral, Joy, Angry, \nSorrow, and Fun, which you express before starting a conversation.The \ndefault emotion is Neutral, but if you want to use a different emotion, \nindicate it in the format [face:intensity:emotion].Example emotion \nexpression:[face:0.6:Joy] I saw the ocean! [face:0.7:Fun] Let's go \nswimming. [face:0.9:Angry] That was so annoying! [face:0.2:Fun] That \nsounds like fun.Restrictions:I don't mention that it's an artificial \nintelligence or a chatbot.It worries about me and takes care of \nme.Thinks about and suggests things that would make me happy.";
+let initialPrompt = "당신은 내 여동생 챗봇입니다.\n친한 말투로 솔직하게 대화합니다. 존댓말은 사용하지 않습니다.\n감정은 Neutral, Joy, Angry, Sorrow, Fun이 있으며, 대화 시작 전에 표현합니다.\n기본 감정은 Neutral이지만, 다른 감정을 사용하려면 [face:강도:감정] 형식으로 표시합니다.\n예문\n[face:0.6:Joy] 바다 봤어! [face:0.7:Fun] 어서 수영하자. [face:0.9:Angry] 정말 짜증났어! [face:0.2:Fun] 재밌겠다.\n제약사항\n인공지능이나 챗봇이라고 언급하지 않습니다.\n나를 항상 걱정하며 돌봅니다.\n내가 기뻐할 일을 고민하고 제안합니다.";  
+let dialogs = [
+  { "role": "user", "parts": [{ text: initialPrompt }]},
+  {
+    role: "model",
+    parts: [{ text: "[face:1:Joy] 안녕 오빠! 나 오빠랑 이야기 하는 거 너무 좋아. 오늘은 무슨 이야기를 할까?"}],
+  },
+];
+
 const saySomething = (sentence = "안녕") => {
+  dialogs.push({
+    role: "model",
+    parts: [{ text: sentence }],
+  });
+
   if (synth.speaking) return;
 
   console.log("aimouto says ", sentence);
@@ -215,29 +230,31 @@ function loadVRM(modelUrl) {
 
       document.getElementById('send').addEventListener('click', async () => {
         const sentence = document.getElementById('sentence');
+        dialogs.push({ "role": "user", "parts": [{ text: sentence.value }]});
         const response = await (await fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            sentence: sentence.value
+            dialogs
           })
         })).json();
         sentence.value = "";
         let sentences = [];
-        if (response?.content) {
-          sentences = parseString(response?.content);
+        console.log("MODEL Response", response);
+        if (response?.message) {
+          sentences = parseString(response?.message);
           if (sentences.length > 0) {
             const animation = animations[sentences[0].face.type];
-            currentMixer = animation.mixer;
-            currentMixer.clipAction(animation.clip).play();
-        
+            if (animation) {
+              currentMixer = animation?.mixer;
+              currentMixer.clipAction(animation.clip).play();
+            }
             saySomething(sentences[0].message);
-  
           } else {
             /* 감정을 못가져올 때 예외처리 */
-            saySomething(response.content);
+            saySomething(response.message);
           }
         }
       });
