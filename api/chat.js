@@ -4,11 +4,9 @@
 
 const {
     GoogleGenerativeAI,
-    HarmCategory,
-    HarmBlockThreshold,
   } = require("@google/generative-ai");
   
-const MODEL_NAME = "gemini-pro";
+const MODEL_NAME = process.env.GEMINI_MODEL_NAME
 const API_KEY = process.env.GEMINI_API_KEY;
 ;
 
@@ -33,49 +31,27 @@ function readRequestBody(req) {
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: MODEL_NAME });
 const generationConfig = {
-  temperature: 0.9,
-  topK: 1,
-  topP: 1,
-  maxOutputTokens: 2048,
+  temperature: 1,
+  topP: 0.95,
+  topK: 64,
+  maxOutputTokens: 8192,
 };
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-];
 
 async function runChat(dialogs) {
   const message = dialogs.pop(1).parts;
-  const chat = model.startChat({
+  const chatSession = model.startChat({
     generationConfig,
-    safetySettings,
     history: dialogs
   });
-
   console.log(message[0].text);
-
-  const result = await chat.sendMessage(message[0].text);
-  // const response = await result.response;
+  const result = await chatSession.sendMessage(message[0].text);
   return result.response;
 }
 
 export default async function handler(req, res) {
   try {
     const requestBody = await readRequestBody(req);
-    console.log('Request Body:', requestBody);
+    console.log("request body:", requestBody);
     const body = JSON.parse(requestBody);
     const response = await runChat(body.dialogs);
     const result = response.text();
