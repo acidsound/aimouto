@@ -49,21 +49,41 @@ async function runChat(dialogs) {
 }
 
 export default async function handler(req, res) {
+  let requestBody;
+  let body;
+
   try {
-    const requestBody = await readRequestBody(req);
+    requestBody = await readRequestBody(req);
     console.log("request body:", requestBody);
-    const body = JSON.parse(requestBody);
+    
+    if (!requestBody) {
+      return sendErrorResponse(res, 400, 'Request body is required');
+    }
+
+    body = JSON.parse(requestBody);
+    
+    if (!body.dialogs || !Array.isArray(body.dialogs) || body.dialogs.length === 0) {
+      return sendErrorResponse(res, 400, 'dialogs must be a non-empty array');
+    }
+
     const response = await runChat(body.dialogs);
     const result = response.text();
     console.log("model response:", result);
+    
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify({
-      message:result
-    }));
+    return res.end(JSON.stringify({ message: result }));
   } catch (err) {
     console.error('Error:', err);
-
-    res.writeHead(500, { 'Content-Type': 'text/plain' });
-    return res.end('Internal server error.\n');
+    
+    if (err instanceof SyntaxError) {
+      return sendErrorResponse(res, 400, 'Invalid JSON in request body');
+    }
+    
+    return sendErrorResponse(res, 500, 'Internal server error');
   }
+}
+
+function sendErrorResponse(res, statusCode, message) {
+  res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  return res.end(JSON.stringify({ error: message }));
 }

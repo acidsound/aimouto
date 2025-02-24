@@ -21,6 +21,7 @@ const animations = {
   "Joy": { url: "Happy.fbx" },
   "Sorrow": { url: "Sad_Idle.fbx" },
   "Fun": { url: "Laughing.fbx" },
+  "Idle": { url: "Standing_Idle.fbx" },
 }
 const DEFAULT_ANIMATION = "Neutral";
 
@@ -79,8 +80,15 @@ const saySomething = (sentence = "안녕") => {
       clearTimeout(currentTimeoutId);
       currentTimeoutId = null;
     }
+    // Fade out current animation before stopping
     if (currentMixer) {
-      currentMixer.stopAllAction();
+      const actions = currentMixer._actions || [];
+      actions.forEach(action => {
+        action.fadeOut(0.5);
+      });
+      setTimeout(() => {
+        currentMixer.stopAllAction();
+      }, 500);
     }
     // Clear any existing text
     if (textMesh) {
@@ -107,8 +115,8 @@ const saySomething = (sentence = "안녕") => {
   console.log("aimouto says ", sentence);
   utteranceClock = new THREE.Clock();
 
-  // Split the sentence into an array using punctuation marks
-  const sentences = sentence.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  // Split the sentence into an array using Korean sentence endings and punctuation marks
+  const sentences = sentence.split(/[.!?요\n]+/).filter(s => s.trim().length > 0);
   currentSentences = sentences;
   currentSentenceIndex = 0;
 
@@ -126,42 +134,68 @@ const saySomething = (sentence = "안녕") => {
       createTextSprite(currentSentence);
 
       const utterance = new SpeechSynthesisUtterance(currentSentence);
-      utterance.voice = synth.getVoices().findLast(o=>o.lang==='ko-KR');
-      utterance.pitch = 1.21;
-      utterances.push(utterance);
+      const koreanVoice = synth.getVoices().find(voice => voice.lang === 'ko-KR');
+      if (koreanVoice) {
+        utterance.voice = koreanVoice;
+        utterance.pitch = 1.21;
+        utterance.rate = 1.1;
+        utterances.push(utterance);
 
-      utterance.onend = function () {
-        console.log("SpeechSynthesisUtterance.onend");
-        currentSentenceIndex++;
-        if (currentSentenceIndex < sentences.length) {
-          currentTimeoutId = setTimeout(() => speakNextSentence(), 500); // Store timeout ID
-        } else {
-          // Reset speaking state when all sentences are done
-          isSpeaking = false;
-          currentVrm.expressionManager.setValue('oh', 0);
-          const animation = animations[DEFAULT_ANIMATION];
-          currentMixer = animation.mixer;
-          currentMixer.clipAction(animation.clip).play();
-          // Clear the text sprite after the last sentence
-          if (textMesh) {
-            scene.remove(textMesh);
-            textMesh.material.dispose();
-            textMesh.geometry.dispose();
-            textMesh = null;
+        utterance.onend = function () {
+          console.log("SpeechSynthesisUtterance.onend");
+          currentSentenceIndex++;
+          if (currentSentenceIndex < sentences.length) {
+            currentTimeoutId = setTimeout(() => speakNextSentence(), 300);
+          } else {
+            // Reset speaking state when all sentences are done
+            isSpeaking = false;
+            if (currentVrm) {
+              currentVrm.expressionManager.setValue('oh', 0);
+            }
+            const animation = animations[DEFAULT_ANIMATION];
+            if (animation && animation.mixer) {
+              // Fade out current animation
+              if (currentMixer) {
+                const actions = currentMixer._actions || [];
+                actions.forEach(action => {
+                  action.fadeOut(0.5);
+                });
+              }
+              // Switch to default animation with fade in after current animation fades out
+              setTimeout(() => {
+                currentMixer = animation.mixer;
+                const newAction = currentMixer.clipAction(animation.clip);
+                newAction.fadeIn(0.5).play();
+              }, 500);
+              console.log("Switching to default animation");
+            }
+            console.log("All sentences spoken");
+            // Clear the text sprite after a short delay
+            setTimeout(() => {
+              if (textMesh) {
+                scene.remove(textMesh);
+                textMesh.material.dispose();
+                textMesh.geometry.dispose();
+                textMesh = null;
+              }
+            }, 500);
           }
-        }
-      };
+        };
 
-      utterance.onerror = function () {
-        console.error("Speech synthesis error");
-        isSpeaking = false; // Reset speaking state on error
-        currentSentenceIndex++;
-        if (currentSentenceIndex < sentences.length) {
-          setTimeout(() => speakNextSentence(), 500);
-        }
-      };
+        utterance.onerror = function (event) {
+          console.error("Speech synthesis error:", event);
+          isSpeaking = false;
+          currentSentenceIndex++;
+          if (currentSentenceIndex < sentences.length) {
+            setTimeout(() => speakNextSentence(), 300);
+          }
+        };
 
-      synth.speak(utterance);
+        synth.speak(utterance);
+      } else {
+        console.error("No Korean voice found");
+        isSpeaking = false;
+      }
     }
   };
 
@@ -171,9 +205,9 @@ const saySomething = (sentence = "안녕") => {
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 /* speechRecognition */
-const recognition = new SpeechRecognition();
-recognition.continuous = true;
-recognition.lang = "ko-KR";
+const recognition = new webkitSpeechRecognition();
+recognition.continuous = false;
+recognition.lang = 'ko-KR';
 recognition.interimResults = false;
 recognition.maxAlternatives = 1;
 
@@ -456,50 +490,6 @@ recognition.onresult = async (event) => {
     console.error('Error:', err);
   }
 };
-
-gui.add(params, 'saySomething');
-
-gui.add(params, 'listen');
-
-gui.add(params, 'timeScale', 0.0, 2.0, 0.001).onChange((value) => {
-  currentMixer.timeScale = value;
-});
-
-gui.add(params, 'blinkLeft', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('blinkLeft', value);
-});
-
-gui.add(params, 'blinkRight', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('blinkRight', value);
-});
-
-gui.add(params, 'aa', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('aa', value);
-});
-
-gui.add(params, 'ee', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('ee', value);
-});
-
-gui.add(params, 'ih', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('ih', value);
-});
-
-gui.add(params, 'oh', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('oh', value);
-});
-
-gui.add(params, 'ou', 0.0, 1.0, 0.1).onChange((value) => {
-  currentVrm.expressionManager.setValue('ou', value);
-});
-
-// mouse listener
-window.addEventListener('mousemove', (event) => {
-
-  lookAtTarget.position.x = 10.0 * ((event.clientX - 0.5 * window.innerWidth) / window.innerHeight);
-  lookAtTarget.position.y = - 10.0 * ((event.clientY - 0.5 * window.innerHeight) / window.innerHeight);
-
-});
 
 async function* animationsGenerator(animations) {
   for (const animationName in animations) {
