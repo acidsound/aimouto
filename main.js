@@ -14,7 +14,7 @@ function init() {
     alert('Web Audio API is not supported in this browser');
   }
 }
-let currentTimeoutId = null;
+// Remove duplicate declaration since currentTimeoutId is already declared later
 const animations = {
   "Angry": { url: "Angry.fbx" },
   "Neutral": { url: "Neutral_Idle.fbx" },
@@ -67,29 +67,37 @@ let dialogs = [
   },
 ];
 
+let isSpeaking = false;
+let currentTimeoutId = null;
+
 const saySomething = (sentence = "안녕") => {
-  // Clear any existing timeouts
-  if (currentTimeoutId) {
-    clearTimeout(currentTimeoutId);
-    currentTimeoutId = null;
+  // Set speaking flag to prevent concurrent speech
+  if (isSpeaking) {
+    // Cancel all ongoing speech and animations
+    synth.cancel();
+    if (currentTimeoutId) {
+      clearTimeout(currentTimeoutId);
+      currentTimeoutId = null;
+    }
+    if (currentMixer) {
+      currentMixer.stopAllAction();
+    }
+    // Clear any existing text
+    if (textMesh) {
+      scene.remove(textMesh);
+      textMesh.material.dispose();
+      textMesh.geometry.dispose();
+      textMesh = null;
+    }
+    // Clear all pending utterances
+    while(utterances.length > 0) {
+      const utterance = utterances.pop();
+      utterance.onend = null;
+      utterance.onerror = null;
+    }
   }
-
-  // Clear any existing text and speech
-  if (textMesh) {
-    scene.remove(textMesh);
-    textMesh.material.dispose();
-    textMesh.geometry.dispose();
-    textMesh = null;
-  }
-
-  if (synth.speaking) {
-    synth.cancel(); // Cancel any ongoing speech
-  }
-
-  // Reset any ongoing animations
-  if (currentMixer) {
-    currentMixer.stopAllAction();
-  }
+  
+  isSpeaking = true;
 
   dialogs.push({
     role: "model",
@@ -128,6 +136,8 @@ const saySomething = (sentence = "안녕") => {
         if (currentSentenceIndex < sentences.length) {
           currentTimeoutId = setTimeout(() => speakNextSentence(), 500); // Store timeout ID
         } else {
+          // Reset speaking state when all sentences are done
+          isSpeaking = false;
           currentVrm.expressionManager.setValue('oh', 0);
           const animation = animations[DEFAULT_ANIMATION];
           currentMixer = animation.mixer;
@@ -144,15 +154,12 @@ const saySomething = (sentence = "안녕") => {
 
       utterance.onerror = function () {
         console.error("Speech synthesis error");
+        isSpeaking = false; // Reset speaking state on error
         currentSentenceIndex++;
         if (currentSentenceIndex < sentences.length) {
           setTimeout(() => speakNextSentence(), 500);
         }
       };
-
-      utterance.addEventListener('boundary', function (event) {
-        console.log(event.name + ' boundary reached after ' + event.elapsedTime + ' milliseconds.');
-      });
 
       synth.speak(utterance);
     }
