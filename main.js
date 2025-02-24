@@ -4,7 +4,6 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { loadMixamoAnimation } from './loadMixamoAnimation.js';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
-
 let audioContext;
 window.addEventListener('load', init, false);
 function init() {
@@ -15,7 +14,7 @@ function init() {
     alert('Web Audio API is not supported in this browser');
   }
 }
-
+let currentTimeoutId = null;
 const animations = {
   "Angry": { url: "Angry.fbx" },
   "Neutral": { url: "Neutral_Idle.fbx" },
@@ -59,7 +58,7 @@ populateVoices();
 const utterances = [];
 
 // let initialPrompt = "You are \nmy little younger sister chatbot.I speak to you in a friendly, straightforward \nmanner. We do not use honorifics.Your emotions are Neutral, Joy, Angry, \nSorrow, and Fun, which you express before starting a conversation.The \ndefault emotion is Neutral, but if you want to use a different emotion, \nindicate it in the format [face:intensity:emotion].Example emotion \nexpression:[face:0.6:Joy] I saw the ocean! [face:0.7:Fun] Let's go \nswimming. [face:0.9:Angry] That was so annoying! [face:0.2:Fun] That \nsounds like fun.Restrictions:I don't mention that it's an artificial \nintelligence or a chatbot.It worries about me and takes care of \nme.Thinks about and suggests things that would make me happy.";
-let initialPrompt = "당신은 내 여동생 챗봇입니다.\n친한 말투로 솔직하게 대화합니다. 존댓말은 사용하지 않습니다.\n감정은 Neutral, Joy, Angry, Sorrow, Fun이 있으며, 대화 시작 전에 표현합니다.\n기본 감정은 Neutral이지만, 다른 감정을 사용하려면 [face:강도:감정] 형식으로 표시합니다.\n예문\n[face:0.6:Joy] 바다 봤어! [face:0.7:Fun] 어서 수영하자. [face:0.9:Angry] 정말 짜증났어! [face:0.2:Fun] 재밌겠다.\n제약사항\n인공지능이나 챗봇이라고 언급하지 않습니다.\n나를 항상 걱정하며 돌봅니다.\n내가 기뻐할 일을 고민하고 제안합니다.";  
+let initialPrompt = "당신은 내 여동생 챗봇입니다.\n친한 말투로 솔직하게 대화합니다. 존댓말은 사용하지 않습니다.\n감정은 Neutral, Joy, Angry, Sorrow, Fun이 있으며, 대화 시작할 때 맨 앞에 한번만 표현합니다.\n기본 감정은 Neutral이지만, 다른 감정을 사용하려면 [face:강도:감정] 형식으로 표시합니다.\n예문\n[face:0.6:Joy] 바다를 보니까 정말 신나! 수영도 하고 싶고 오빠랑 같이 놀고 싶어. 날씨도 좋은데 주말에 바다 가자.\n[face:0.9:Angry] 오늘 친구랑 싸워서 너무 속상해. 내가 잘못한 것도 아닌데 오해를 해서 그래. 오빠는 이럴 때 어떻게 하는 게 좋을까?\n제약사항\n인공지능이나 챗봇이라고 언급하지 않습니다.\n나를 항상 걱정하며 돌봅니다.\n내가 기뻐할 일을 고민하고 제안합니다.";
 let dialogs = [
   { "role": "user", "parts": [{ text: initialPrompt }]},
   {
@@ -69,38 +68,97 @@ let dialogs = [
 ];
 
 const saySomething = (sentence = "안녕") => {
+  // Clear any existing timeouts
+  if (currentTimeoutId) {
+    clearTimeout(currentTimeoutId);
+    currentTimeoutId = null;
+  }
+
+  // Clear any existing text and speech
+  if (textMesh) {
+    scene.remove(textMesh);
+    textMesh.material.dispose();
+    textMesh.geometry.dispose();
+    textMesh = null;
+  }
+
+  if (synth.speaking) {
+    synth.cancel(); // Cancel any ongoing speech
+  }
+
+  // Reset any ongoing animations
+  if (currentMixer) {
+    currentMixer.stopAllAction();
+  }
+
   dialogs.push({
     role: "model",
     parts: [{ text: sentence }],
   });
 
-  if (synth.speaking) return;
-
   console.log("aimouto says ", sentence);
   utteranceClock = new THREE.Clock();
 
-  const utterance = new SpeechSynthesisUtterance(sentence);
-  utterance.voice = synth.getVoices().findLast(o=>o.lang==='ko-KR');
-  utterance.pitch = 1.21;
-  utterances.push(utterance);
+  // Split the sentence into an array using punctuation marks
+  const sentences = sentence.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  currentSentences = sentences;
+  currentSentenceIndex = 0;
 
-  utterance.onend = function () {
-    console.log("SpeechSynthesisUtterance.onend");
-    currentVrm.expressionManager.setValue('oh', 0);
-    const animation = animations[DEFAULT_ANIMATION];
-    currentMixer = animation.mixer;
-    currentMixer.clipAction(animation.clip).play();
+  const speakNextSentence = () => {
+    if (currentSentenceIndex < sentences.length) {
+      // Clear previous text before showing new one
+      if (textMesh) {
+        scene.remove(textMesh);
+        textMesh.material.dispose();
+        textMesh.geometry.dispose();
+        textMesh = null;
+      }
 
-    // res();
+      const currentSentence = sentences[currentSentenceIndex];
+      createTextSprite(currentSentence);
+
+      const utterance = new SpeechSynthesisUtterance(currentSentence);
+      utterance.voice = synth.getVoices().findLast(o=>o.lang==='ko-KR');
+      utterance.pitch = 1.21;
+      utterances.push(utterance);
+
+      utterance.onend = function () {
+        console.log("SpeechSynthesisUtterance.onend");
+        currentSentenceIndex++;
+        if (currentSentenceIndex < sentences.length) {
+          currentTimeoutId = setTimeout(() => speakNextSentence(), 500); // Store timeout ID
+        } else {
+          currentVrm.expressionManager.setValue('oh', 0);
+          const animation = animations[DEFAULT_ANIMATION];
+          currentMixer = animation.mixer;
+          currentMixer.clipAction(animation.clip).play();
+          // Clear the text sprite after the last sentence
+          if (textMesh) {
+            scene.remove(textMesh);
+            textMesh.material.dispose();
+            textMesh.geometry.dispose();
+            textMesh = null;
+          }
+        }
+      };
+
+      utterance.onerror = function () {
+        console.error("Speech synthesis error");
+        currentSentenceIndex++;
+        if (currentSentenceIndex < sentences.length) {
+          setTimeout(() => speakNextSentence(), 500);
+        }
+      };
+
+      utterance.addEventListener('boundary', function (event) {
+        console.log(event.name + ' boundary reached after ' + event.elapsedTime + ' milliseconds.');
+      });
+
+      synth.speak(utterance);
+    }
   };
-  utterance.onerror = function () {
-    // rej("SpeechSynthesisUtterance.onerror");
-  };
 
-  utterance.addEventListener('boundary', function (event) {
-    console.log(event.name + ' boundary reached after ' + event.elapsedTime + ' milliseconds.');
-  });
-  synth.speak(utterance);
+  speakNextSentence();
 };
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -131,6 +189,10 @@ controls.update();
 
 // scene
 const scene = new THREE.Scene();
+let textMesh = null;
+let currentSentences = [];
+let currentSentenceIndex = 0;
+let textChangeInterval = null;
 
 // light
 const light = new THREE.DirectionalLight(0xffffff);
@@ -224,7 +286,6 @@ function loadVRM(modelUrl) {
       // rotate if the VRM is VRM0.0
       VRMUtils.rotateVRM0(vrm);
 
-      console.log(vrm);
       // put the model to the scene
       scene.add(vrm.scene);
 
@@ -254,6 +315,7 @@ function loadVRM(modelUrl) {
             saySomething(sentences[0].message);
           } else {
             /* 감정을 못가져올 때 예외처리 */
+            createTextSprite(response.message);
             saySomething(response.message);
           }
         }
@@ -295,6 +357,37 @@ scene.add(axesHelper);
 // animate
 const clock = new THREE.Clock();
 let utteranceClock = new THREE.Clock();
+function createTextSprite(text) {
+  if (textMesh) {
+    scene.remove(textMesh);
+    textMesh.material.dispose();
+    textMesh.geometry.dispose();
+    textMesh = null;
+  }
+
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  canvas.width = 1024;
+  canvas.height = 128;
+  
+  context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.font = 'bold 48px Arial';
+  context.fillStyle = 'white';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(text, canvas.width/2, canvas.height/2);
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture });
+  const sprite = new THREE.Sprite(material);
+  
+  sprite.scale.set(4, 0.5, 1);
+  sprite.position.set(0, 2.5, -2);
+  
+  textMesh = sprite;
+  scene.add(sprite);
+}
 
 function animate() {
 
