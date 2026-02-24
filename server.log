@@ -1,0 +1,237 @@
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 200 in 16 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 35 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 5 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 11 ms
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:30:03 ::1 Returned 304 in 4 ms
+ HTTP  2026. 2. 23. 오전 2:30:04 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:30:04 ::1 Returned 304 in 3 ms
+ HTTP  2026. 2. 23. 오전 2:30:04 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:30:04 ::1 Returned 304 in 4 ms
+ HTTP  2026. 2. 23. 오전 2:30:04 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:30:04 ::1 Returned 304 in 5 ms
+ HTTP  2026. 2. 23. 오전 2:34:04 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:34:04 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:34:04 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:34:04 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:34:08 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:34:08 ::1 Returned 404 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:34:12 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:34:12 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:34:12 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:34:12 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:34:12 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:34:12 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 Returned 200 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 GET /favicon.ico
+ HTTP  2026. 2. 23. 오전 2:35:31 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:44:35 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 GET /favicon.ico
+ HTTP  2026. 2. 23. 오전 2:44:36 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 GET /favicon.ico
+ HTTP  2026. 2. 23. 오전 2:50:36 ::1 Returned 404 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 Returned 200 in 3 ms
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 GET /.well-known/appspecific/com.chrome.devtools.json
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:51:35 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /favicon.ico
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 404 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:51:36 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:40 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:51:40 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:51:40 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:51:40 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:51:41 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:57:52 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:53 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:57:53 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:57:53 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:57:53 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:57:53 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:57:53 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 Returned 200 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:58:04 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:58:05 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:08 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:58:08 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:08 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:58:08 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 3 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:58:09 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:58:10 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:58:10 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:59:00 ::1 GET /
+ HTTP  2026. 2. 23. 오전 2:59:00 ::1 Returned 200 in 3 ms
+ HTTP  2026. 2. 23. 오전 2:59:00 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 2:59:00 ::1 Returned 200 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 2 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 2:59:01 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 200 in 2 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /main.js
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 200 in 4 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /loadMixamoAnimation.js
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /mixamoVRMRigMap.js
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 200 in 1 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /assets/models/aimouto.vrm
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 200 in 0 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /favicon.ico
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 404 in 3 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /assets/anims/Angry.fbx
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 GET /assets/anims/Neutral_Idle.fbx
+ HTTP  2026. 2. 23. 오전 3:01:28 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 GET /assets/anims/Happy.fbx
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 GET /assets/anims/Sad_Idle.fbx
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 Returned 304 in 1 ms
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 GET /assets/anims/Laughing.fbx
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 Returned 304 in 0 ms
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 GET /assets/anims/Standing_Idle.fbx
+ HTTP  2026. 2. 23. 오전 3:01:29 ::1 Returned 304 in 0 ms

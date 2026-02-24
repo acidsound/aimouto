@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "playwright": "^1.58.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5",
+    "vue": "^3.5.28"
+  },
+  "scripts": {
+    "start": "npm run indicator & npx serve . > server.log 2>&1 & echo Server started && echo Access: http://localhost:33000 && echo \nUse 'npm stop' to stop the server",
+    "stop": "powershell -NoProfile -Command \"$pids = (Get-NetTCPConnection -LocalPort 33000 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique); if ($pids) { foreach ($procId in $pids) { Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue }; Write-Output 'Server stopped'; } else { Write-Output 'Server not running'; }\"",
+    "indicator": "node status-indicator.js"
+  }
+}
