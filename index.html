@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
   <head>
     <meta charset="utf-8" />
@@ -9,27 +8,231 @@
       content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <style>
-      body {
+      * {
         margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      canvas {
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100vh;
+        width: 100vw;
+      }
+
+      .app-container {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        grid-template-rows: 1fr auto;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      .chat-history {
+        grid-column: 1;
+        grid-row: 1;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .chat-history::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-history::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .chat-history::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 3px;
+      }
+
+      .chat-message {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: white;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .chat-message.user {
+        background: rgba(102, 126, 234, 0.5);
+        align-self: flex-end;
+      }
+
+      .chat-message.assistant {
+        background: rgba(255, 255, 255, 0.2);
+        align-self: flex-start;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .character-view {
+        grid-column: 2;
+        grid-row: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #character-canvas {
+        width: 100%;
+        height: 100%;
         display: block;
+      }
+
+      .chat-input-area {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      #sentence {
+        flex: 1;
+        height: 3rem;
+        padding: 0.75rem 1rem;
+        border: none;
+        border-radius: 2rem;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 1rem;
+        outline: none;
+        resize: none;
+      }
+
+      #sentence::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .action-btn {
+        height: 3rem;
+        padding: 0 1.5rem;
+        border: none;
+        border-radius: 2rem;
+        background: rgba(255, 255, 255, 0.25);
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .action-btn:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .action-btn:active {
+        transform: translateY(0);
+      }
+
+      @media (max-width: 768px) {
+        .app-container {
+          grid-template-columns: 1fr;
+          grid-template-rows: 60vh auto 1fr;
+          height: 100vh;
+        }
+
+        .character-view {
+          grid-column: 1;
+          grid-row: 1;
+          min-height: 60vh;
+        }
+
+        .chat-input-area {
+          grid-column: 1;
+          grid-row: 2;
+        }
+
+        .chat-history {
+          grid-column: 1;
+          grid-row: 3;
+          border-right: none;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          max-height: calc(40vh - 120px);
+        }
+      }
+
+      @media (max-width: 480px) {
+        .chat-input-area {
+          flex-wrap: wrap;
+          padding: 0.75rem;
+        }
+
+        #sentence {
+          width: 100%;
+          height: 2.5rem;
+        }
+
+        .action-btn {
+          height: 2.5rem;
+          padding: 0 1rem;
+          font-size: 0.8rem;
+        }
+
+        .chat-message {
+          font-size: 0.85rem;
+          padding: 0.6rem 0.85rem;
+        }
       }
     </style>
   </head>
 
   <body>
-    <div
-      id="footer"
-      style="position: absolute; bottom: 1em; left: 3vw; display: flex; gap: 0.5em"
-    >
-      <textarea style="height: 3em; width: 80vw" id="sentence"></textarea>
-      <button style="width: 4em" id="send">send</button>
-      <button style="width: 4em" id="listen">listen</button>
+    <div class="app-container">
+      <div class="chat-history" id="chat-history">
+        <div class="chat-message assistant">
+          안녕 오빠! 나 오빠랑 이야기 하는 거 너무 좋아. 오늘은 무슨 이야기를 할까?
+        </div>
+      </div>
+
+      <div class="character-view">
+        <canvas id="character-canvas"></canvas>
+        <div id="loading-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.5); color: white; font-size: 1.2rem; z-index: 10;">
+          모델을 로딩 중입니다...
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <textarea id="sentence" placeholder="메시지를 입력하세요..." disabled></textarea>
+        <button class="action-btn" id="send" disabled>
+          전송
+        </button>
+        <button class="action-btn" id="listen" disabled>
+          음성
+        </button>
+      </div>
     </div>
-    <!-- Import maps polyfill -->
-    <!-- Remove this when import maps will be widely supported -->
+
     <script
       async
       src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"

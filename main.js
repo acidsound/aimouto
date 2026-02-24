@@ -3,7 +3,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { loadMixamoAnimation } from './loadMixamoAnimation.js';
-import GUI from 'three/addons/libs/lil-gui.module.min.js';
 let audioContext;
 window.addEventListener('load', init, false);
 function init() {
@@ -26,7 +25,7 @@ const animations = {
 const DEFAULT_ANIMATION = "Neutral";
 
 const synth = window.speechSynthesis;
-let voices;
+let voices = [];
 
 const params = {
   timeScale: 1.0,
@@ -55,6 +54,11 @@ function populateVoices() {
 }
 
 populateVoices();
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = () => {
+    populateVoices();
+  };
+}
 
 const utterances = [];
 
@@ -68,45 +72,217 @@ let dialogs = [
   },
 ];
 
-let isSpeaking = false;
-let currentTimeoutId = null;
+const speechState = {
+  isSpeaking: false,
+  currentTimeoutId: null,
+  currentSentences: [],
+  currentSentenceIndex: 0,
+  segmentQueue: [],
+};
 
-const saySomething = (sentence = "안녕") => {
-  // Set speaking flag to prevent concurrent speech
-  if (isSpeaking) {
-    // Cancel all ongoing speech and animations
+function getKoreanVoice() {
+  return voices.find(voice => voice.lang === 'ko-KR') || voices[0] || null;
+}
+
+function stopSpeaking() {
+  if (speechState.isSpeaking) {
     synth.cancel();
-    if (currentTimeoutId) {
-      clearTimeout(currentTimeoutId);
-      currentTimeoutId = null;
-    }
-    // Fade out current animation before stopping
+  }
+  if (speechState.currentTimeoutId) {
+    clearTimeout(speechState.currentTimeoutId);
+    speechState.currentTimeoutId = null;
+  }
+  if (currentMixer) {
+    const actions = currentMixer._actions || [];
+    actions.forEach(action => {
+      action.fadeOut(0.5);
+    });
+    setTimeout(() => {
+      currentMixer.stopAllAction();
+    }, 500);
+  }
+  while (utterances.length > 0) {
+    const utterance = utterances.pop();
+    utterance.onend = null;
+    utterance.onerror = null;
+  }
+  speechState.isSpeaking = false;
+  speechState.segmentQueue = [];
+  clearEmotion();
+}
+
+function switchToDefaultAnimation() {
+  const animation = animations[DEFAULT_ANIMATION];
+  if (animation && animation.mixer) {
     if (currentMixer) {
       const actions = currentMixer._actions || [];
       actions.forEach(action => {
         action.fadeOut(0.5);
       });
-      setTimeout(() => {
-        currentMixer.stopAllAction();
-      }, 500);
     }
-    // Clear any existing text
-    if (textMesh) {
-      scene.remove(textMesh);
-      textMesh.material.dispose();
-      textMesh.geometry.dispose();
-      textMesh = null;
+    setTimeout(() => {
+      currentMixer = animation.mixer;
+      const newAction = currentMixer.clipAction(animation.clip);
+      newAction.fadeIn(0.5).play();
+    }, 500);
+  }
+}
+
+const fallbackEmotionExpressionMap = {
+  Joy: 'happy',
+  Angry: 'angry',
+  Sorrow: 'sad',
+  Fun: 'relaxed',
+  Neutral: 'neutral',
+};
+
+const emotionExpressionCandidates = {
+  Joy: ['happy', 'joy', 'smile', 'relaxed'],
+  Angry: ['angry', 'anger', 'mad'],
+  Sorrow: ['sad', 'sorrow', 'unhappy'],
+  Fun: ['relaxed', 'fun', 'happy', 'smile'],
+  Neutral: ['neutral', 'default'],
+};
+
+let activeEmotionExpressionMap = { ...fallbackEmotionExpressionMap };
+let availableExpressionNames = [];
+
+let currentExpressionName = null;
+
+function collectExpressionNames(vrm) {
+  const manager = vrm && vrm.expressionManager;
+  if (!manager) return [];
+
+  const names = new Set();
+  const keySources = [
+    manager.expressionMap,
+    manager._expressionMap,
+    manager.presetExpressionMap,
+  ];
+
+  keySources.forEach((source) => {
+    if (source && typeof source === 'object') {
+      Object.keys(source).forEach((name) => names.add(name));
     }
-    // Clear all pending utterances
-    while(utterances.length > 0) {
-      const utterance = utterances.pop();
-      utterance.onend = null;
-      utterance.onerror = null;
+  });
+
+  if (Array.isArray(manager.expressions)) {
+    manager.expressions.forEach((expression) => {
+      if (expression && typeof expression.expressionName === 'string') {
+        names.add(expression.expressionName);
+      }
+      if (expression && typeof expression.name === 'string') {
+        names.add(expression.name);
+      }
+    });
+  }
+
+  if (typeof manager.getExpressionNames === 'function') {
+    const listed = manager.getExpressionNames();
+    if (Array.isArray(listed)) {
+      listed.forEach((name) => {
+        if (typeof name === 'string') names.add(name);
+      });
     }
   }
-  
-  isSpeaking = true;
 
+  return Array.from(names);
+}
+
+function resolveExpressionName(availableNames, candidates) {
+  if (!Array.isArray(availableNames) || availableNames.length === 0) return null;
+  if (!Array.isArray(candidates) || candidates.length === 0) return null;
+
+  const byLowerName = new Map();
+  availableNames.forEach((name) => {
+    if (typeof name === 'string') {
+      byLowerName.set(name.toLowerCase(), name);
+    }
+  });
+
+  for (const candidate of candidates) {
+    const resolved = byLowerName.get(String(candidate).toLowerCase());
+    if (resolved) return resolved;
+  }
+
+  return null;
+}
+
+function rebuildEmotionExpressionMap(vrm) {
+  availableExpressionNames = collectExpressionNames(vrm);
+  activeEmotionExpressionMap = { ...fallbackEmotionExpressionMap };
+
+  if (availableExpressionNames.length === 0) {
+    return;
+  }
+
+  Object.keys(activeEmotionExpressionMap).forEach((emotionName) => {
+    const fallbackName = activeEmotionExpressionMap[emotionName];
+    const candidates = [
+      ...(emotionExpressionCandidates[emotionName] || []),
+      fallbackName,
+      emotionName,
+      emotionName.toLowerCase(),
+    ];
+    const resolved = resolveExpressionName(availableExpressionNames, candidates);
+    activeEmotionExpressionMap[emotionName] = resolved;
+  });
+
+  console.log('VRM expressions:', availableExpressionNames);
+  console.log('Resolved emotion map:', activeEmotionExpressionMap);
+}
+
+function clearEmotion() {
+  if (currentVrm && currentVrm.expressionManager && currentExpressionName) {
+    currentVrm.expressionManager.setValue(currentExpressionName, 0);
+  }
+  currentExpressionName = null;
+}
+
+function applyEmotion(face) {
+  if (!currentVrm || !currentVrm.expressionManager) return;
+
+  clearEmotion();
+
+  if (!face || !face.type) return;
+
+  let expressionName = activeEmotionExpressionMap[face.type];
+  if (!expressionName) {
+    expressionName = resolveExpressionName(availableExpressionNames, [face.type, face.type.toLowerCase()]);
+  }
+  if (!expressionName) return;
+
+  const intensity = Math.max(0, Math.min(1, Number.isFinite(face.strength) ? face.strength : 1));
+  currentVrm.expressionManager.setValue(expressionName, intensity);
+  currentExpressionName = expressionName;
+}
+
+
+function enqueueSegments(segments) {
+  speechState.segmentQueue = speechState.segmentQueue.concat(segments);
+}
+
+let hasWarnedMissingChatHistory = false;
+
+function addChatMessage(message, role = 'assistant') {
+  const chatHistory = document.getElementById('chat-history');
+  if (!chatHistory) {
+    if (!hasWarnedMissingChatHistory) {
+      console.warn('chat-history element not found; skipping chat message rendering.');
+      hasWarnedMissingChatHistory = true;
+    }
+    return;
+  }
+
+  const safeRole = role === 'user' ? 'user' : 'assistant';
+  const chatMessage = document.createElement('div');
+  chatMessage.classList.add('chat-message', safeRole);
+  chatMessage.textContent = typeof message === 'string' ? message : String(message ?? '');
+  chatHistory.appendChild(chatMessage);
+  chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+const saySomething = (sentence = "") => {
   dialogs.push({
     role: "model",
     parts: [{ text: sentence }],
@@ -115,92 +291,83 @@ const saySomething = (sentence = "안녕") => {
   console.log("aimouto says ", sentence);
   utteranceClock = new THREE.Clock();
 
-  // Split the sentence into an array using Korean sentence endings and punctuation marks
-  const sentences = sentence.split(/[.!?요\n]+/).filter(s => s.trim().length > 0);
-  currentSentences = sentences;
-  currentSentenceIndex = 0;
+  const segments = parseString(sentence);
+  if (segments.length > 0) {
+    enqueueSegments(segments);
+  } else {
+    enqueueSegments([{ message: sentence, face: null }]);
+  }
+  playNextSegment();
+};
+
+function playNextSegment() {
+  if (speechState.isSpeaking) return;
+  if (speechState.segmentQueue.length == 0) return;
+
+  speechState.isSpeaking = true;
+  const segment = speechState.segmentQueue.shift();
+
+  if (segment && segment.face && segment.face.type) {
+    applyEmotion(segment.face);
+    const animation = animations[segment.face.type];
+    if (animation) {
+      currentMixer = animation.mixer;
+      currentMixer.clipAction(animation.clip).play();
+    }
+  }
+  if (!segment || !segment.face || !segment.face.type) {
+    clearEmotion();
+  }
+
+  const sentences = (segment && segment.message ? segment.message : '')
+    .split(/[.!?\n]+/)
+    .filter(s => s.trim().length > 0);
+
+  speechState.currentSentences = sentences;
+  speechState.currentSentenceIndex = 0;
 
   const speakNextSentence = () => {
-    if (currentSentenceIndex < sentences.length) {
-      // Clear previous text before showing new one
-      if (textMesh) {
-        scene.remove(textMesh);
-        textMesh.material.dispose();
-        textMesh.geometry.dispose();
-        textMesh = null;
+    if (speechState.currentSentenceIndex >= sentences.length) {
+      speechState.isSpeaking = false;
+      if (currentVrm) {
+        currentVrm.expressionManager.setValue('oh', 0);
+        clearEmotion();
       }
-
-      const currentSentence = sentences[currentSentenceIndex];
-      createTextSprite(currentSentence);
-
-      const utterance = new SpeechSynthesisUtterance(currentSentence);
-      const koreanVoice = synth.getVoices().find(voice => voice.lang === 'ko-KR');
-      if (koreanVoice) {
-        utterance.voice = koreanVoice;
-        utterance.pitch = 1.21;
-        utterance.rate = 1.1;
-        utterances.push(utterance);
-
-        utterance.onend = function () {
-          console.log("SpeechSynthesisUtterance.onend");
-          currentSentenceIndex++;
-          if (currentSentenceIndex < sentences.length) {
-            currentTimeoutId = setTimeout(() => speakNextSentence(), 300);
-          } else {
-            // Reset speaking state when all sentences are done
-            isSpeaking = false;
-            if (currentVrm) {
-              currentVrm.expressionManager.setValue('oh', 0);
-            }
-            const animation = animations[DEFAULT_ANIMATION];
-            if (animation && animation.mixer) {
-              // Fade out current animation
-              if (currentMixer) {
-                const actions = currentMixer._actions || [];
-                actions.forEach(action => {
-                  action.fadeOut(0.5);
-                });
-              }
-              // Switch to default animation with fade in after current animation fades out
-              setTimeout(() => {
-                currentMixer = animation.mixer;
-                const newAction = currentMixer.clipAction(animation.clip);
-                newAction.fadeIn(0.5).play();
-              }, 500);
-              console.log("Switching to default animation");
-            }
-            console.log("All sentences spoken");
-            // Clear the text sprite after a short delay
-            setTimeout(() => {
-              if (textMesh) {
-                scene.remove(textMesh);
-                textMesh.material.dispose();
-                textMesh.geometry.dispose();
-                textMesh = null;
-              }
-            }, 500);
-          }
-        };
-
-        utterance.onerror = function (event) {
-          console.error("Speech synthesis error:", event);
-          isSpeaking = false;
-          currentSentenceIndex++;
-          if (currentSentenceIndex < sentences.length) {
-            setTimeout(() => speakNextSentence(), 300);
-          }
-        };
-
-        synth.speak(utterance);
-      } else {
-        console.error("No Korean voice found");
-        isSpeaking = false;
+      if (speechState.segmentQueue.length == 0) {
+        switchToDefaultAnimation();
       }
+      playNextSegment();
+      return;
     }
+
+    const currentSentence = sentences[speechState.currentSentenceIndex];
+    addChatMessage(currentSentence, 'assistant');
+
+    const utterance = new SpeechSynthesisUtterance(currentSentence);
+    const koreanVoice = getKoreanVoice();
+    if (koreanVoice) {
+      utterance.voice = koreanVoice;
+    }
+    utterance.pitch = 1.21;
+    utterance.rate = 1.1;
+    utterances.push(utterance);
+
+    utterance.onend = function () {
+      speechState.currentSentenceIndex += 1;
+      speechState.currentTimeoutId = setTimeout(() => speakNextSentence(), 300);
+    };
+
+    utterance.onerror = function (event) {
+      console.error("Speech synthesis error:", event);
+      speechState.currentSentenceIndex += 1;
+      speechState.currentTimeoutId = setTimeout(() => speakNextSentence(), 300);
+    };
+
+    synth.speak(utterance);
   };
 
   speakNextSentence();
-};
+}
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -212,33 +379,69 @@ recognition.interimResults = false;
 recognition.maxAlternatives = 1;
 
 // renderer
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
+// Create canvas if it doesn't exist
+let canvas;
+if (!document.getElementById('character-canvas')) {
+  canvas = document.createElement('canvas');
+  canvas.id = 'character-canvas';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  document.body.appendChild(canvas);
+} else {
+  canvas = document.getElementById('character-canvas');
+}
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.outputEncoding = THREE.sRGBEncoding;
-document.body.appendChild(renderer.domElement);
 
 // camera
 const camera = new THREE.PerspectiveCamera(30.0, window.innerWidth / window.innerHeight, 0.1, 20.0);
-camera.position.set(0.0, 1.0, 5.0);
+// 캐릭터 전신이 화면 중앙에 오도록 카메라 위치 조정
+// 카메라를 더 높게(y: 1.1) 설정하고, 캐릭터 중앙을 봄
+camera.position.set(0.0, 1.1, 4.0);
+
+// scene
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
 
 // camera controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.screenSpacePanning = true;
-controls.target.set(0.0, 1.0, 0.0);
-controls.update();
+// 카메라 타겟을 캐릭터 가슴/어깨 높이로 설정
+camera.lookAt(0.0, 0.9, 0.0);
+  controls.target.set(0.0, 0.9, 0.0);
+  controls.update();
 
-// scene
-const scene = new THREE.Scene();
-let textMesh = null;
+  // Ambient light - softer base lighting
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
+
+  // Main directional light (sun-like)
+  const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  mainLight.position.set(5, 8, 5);
+  mainLight.castShadow = true;
+  mainLight.shadow.mapSize.width = 2048;
+  mainLight.shadow.mapSize.height = 2048;
+  mainLight.shadow.camera.near = 0.5;
+  mainLight.shadow.camera.far = 50;
+  mainLight.shadow.camera.top = 10;
+  mainLight.shadow.camera.bottom = -10;
+  mainLight.shadow.camera.left = -10;
+  mainLight.shadow.camera.right = 10;
+  scene.add(mainLight);
+
+  // Fill light - softer, from opposite side
+  const fillLight = new THREE.DirectionalLight(0xe0e0ff, 0.2);
+  fillLight.position.set(-5, 5, -5);
+  scene.add(fillLight);
+
+  // Rim light - subtle backlight for depth
+  const rimLight = new THREE.DirectionalLight(0xffeedd, 0.15);
+  rimLight.position.set(0, 5, -10);
+  scene.add(rimLight);
 let currentSentences = [];
 let currentSentenceIndex = 0;
-let textChangeInterval = null;
-
-// light
-const light = new THREE.DirectionalLight(0xffffff);
-light.position.set(1.0, 1.0, 1.0).normalize();
-scene.add(light);
 
 // lookat target
 const lookAtTarget = new THREE.Object3D();
@@ -307,6 +510,7 @@ function loadVRM(modelUrl) {
       }
 
       currentVrm = vrm;
+      rebuildEmotionExpressionMap(currentVrm);
 
       vrm.lookAt.target = lookAtTarget;
 
@@ -330,37 +534,18 @@ function loadVRM(modelUrl) {
       // put the model to the scene
       scene.add(vrm.scene);
 
-      document.getElementById('send').addEventListener('click', async () => {
-        const sentence = document.getElementById('sentence');
-        dialogs.push({ "role": "user", "parts": [{ text: sentence.value }]});
-        const response = await (await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            dialogs
-          })
-        })).json();
-        sentence.value = "";
-        let sentences = [];
-        console.log("MODEL Response", response);
-        if (response?.message) {
-          sentences = parseString(response?.message);
-          if (sentences.length > 0) {
-            const animation = animations[sentences[0].face.type];
-            if (animation) {
-              currentMixer = animation?.mixer;
-              currentMixer.clipAction(animation.clip).play();
-            }
-            saySomething(sentences[0].message);
-          } else {
-            /* 감정을 못가져올 때 예외처리 */
-            createTextSprite(response.message);
-            saySomething(response.message);
-          }
-        }
-      });
+      // VRM 모델 중심을 기준으로 카메라 조정
+      vrm.scene.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(vrm.scene);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+
+      // 카메라를 캐릭터 중앙을 향하도록 설정
+      controls.target.set(center.x, center.y + size.y * 0.1, center.z);
+      controls.update();
+
+      // Enable input controls after model is loaded
+      enableInputs();
     },
 
     // called while loading is progressing
@@ -388,47 +573,16 @@ async function loadFBX(animationUrl) {
   return [mixer, clip];
 }
 
-// helpers
-const gridHelper = new THREE.GridHelper(10, 10);
-scene.add(gridHelper);
+// helpers - 디버깅용 (필요시 주석 해제)
+// const gridHelper = new THREE.GridHelper(10, 10);
+// scene.add(gridHelper);
 
-const axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
+// const axesHelper = new THREE.AxesHelper(5);
+// scene.add(axesHelper);
 
 // animate
 const clock = new THREE.Clock();
 let utteranceClock = new THREE.Clock();
-function createTextSprite(text) {
-  if (textMesh) {
-    scene.remove(textMesh);
-    textMesh.material.dispose();
-    textMesh.geometry.dispose();
-    textMesh = null;
-  }
-
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  canvas.width = 1024;
-  canvas.height = 128;
-  
-  context.fillStyle = 'rgba(0, 0, 0, 0.5)';
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.font = 'bold 48px Arial';
-  context.fillStyle = 'white';
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-  context.fillText(text, canvas.width/2, canvas.height/2);
-  
-  const texture = new THREE.CanvasTexture(canvas);
-  const material = new THREE.SpriteMaterial({ map: texture });
-  const sprite = new THREE.Sprite(material);
-  
-  sprite.scale.set(4, 0.5, 1);
-  sprite.position.set(0, 2.5, -2);
-  
-  textMesh = sprite;
-  scene.add(sprite);
-}
 
 function animate() {
 
@@ -436,14 +590,8 @@ function animate() {
 
   const deltaTime = clock.getDelta();
 
-  // if animation is loaded
+  // Animation updates
   if (currentMixer) {
-    if (synth.speaking) {
-      const et = utteranceClock.getElapsedTime();
-      currentVrm.expressionManager.setValue('oh', Math.sin(et * 18) * 0.3 + 0.3);
-    }
-
-    // update the animation
     currentMixer.update(deltaTime);
   }
 
@@ -456,8 +604,12 @@ function animate() {
 
 animate();
 
-// gui
-const gui = new GUI();
+window.addEventListener('resize', () => {
+  const container = renderer.domElement.parentElement || document.body;
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+});
 
 const listen = function () {
   recognition.start();
@@ -469,26 +621,7 @@ params.listen = listen;
 recognition.onresult = async (event) => {
   const sentence = event.results[0][0].transcript;
   console.log(sentence);
-  try {
-    const response = await fetch('http://localhost:8080/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        sentence
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const responseData = await response.text();
-    console.log('Response Data:', responseData);
-  } catch (err) {
-    console.error('Error:', err);
-  }
+  await handleUserMessage(sentence);
 };
 
 async function* animationsGenerator(animations) {
@@ -510,6 +643,61 @@ async function loadAnimations(animations) {
   for await (const key of animationsGenerator(animations)) {
     console.log(key);
   }
-  for (const animationName in animations) gui.add(params, animationName);
 }
 
+function enableInputs() {
+  const loadingOverlay = document.getElementById('loading-overlay');
+  if (loadingOverlay) {
+    loadingOverlay.style.display = 'none';
+  }
+  const sentenceInput = document.getElementById('sentence');
+  const sendBtn = document.getElementById('send');
+  const listenBtn = document.getElementById('listen');
+  if (sentenceInput) sentenceInput.disabled = false;
+  if (sendBtn) sendBtn.disabled = false;
+  if (listenBtn) listenBtn.disabled = false;
+}
+
+async function handleUserMessage(userMessage) {
+  if (!userMessage || !userMessage.trim()) return;
+
+  if (speechState.isSpeaking) {
+    stopSpeaking();
+  }
+
+  addChatMessage(userMessage, 'user');
+  dialogs.push({ "role": "user", "parts": [{ text: userMessage }]});
+
+  const response = await (await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      dialogs
+    })
+  })).json();
+
+  console.log("MODEL Response", response);
+  if (response?.message) {
+    saySomething(response.message);
+  }
+}
+
+const sentenceInput = document.getElementById('sentence');
+const sendBtn = document.getElementById('send');
+const listenBtn = document.getElementById('listen');
+
+if (sendBtn && sentenceInput) {
+  sendBtn.addEventListener('click', async () => {
+    const userMessage = sentenceInput.value;
+    sentenceInput.value = "";
+    await handleUserMessage(userMessage);
+  });
+}
+
+if (listenBtn) {
+  listenBtn.addEventListener('click', () => {
+    listen();
+  });
+}
